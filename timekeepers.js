@@ -1,0 +1,121 @@
+const TimeCrystalPuzzle = () => {
+  const [crystals, setCrystals] = useState([
+    { id: 'blue', position: null, value: '2' },
+    { id: 'yellow', position: null, value: '4' },
+    { id: 'green', position: null, value: '1' },
+    { id: 'red', position: null, value: '3' }
+  ]);
+  
+  const [displayTime, setDisplayTime] = useState('--:--');
+  const [solved, setSolved] = useState(false);
+  
+  const crystalColors = {
+    green: 'bg-green-500',
+    blue: 'bg-blue-500',
+    red: 'bg-red-500',
+    yellow: 'bg-yellow-500'
+  };
+
+  const handleDragStart = (e, crystal) => {
+    e.dataTransfer.setData('crystal', crystal.id);
+  };
+
+  const handleDrop = (e, position) => {
+    e.preventDefault();
+    const crystalId = e.dataTransfer.getData('crystal');
+    
+    setCrystals(prevCrystals => {
+      const newCrystals = prevCrystals.map(c => ({
+        ...c,
+        position: c.id === crystalId ? position : 
+                 c.position === position ? null : c.position
+      }));
+      
+      let timeDisplay = ['_', '_', ':', '_', '_'];
+      newCrystals.forEach(crystal => {
+        if (crystal.position !== null) {
+          timeDisplay[crystal.position] = crystal.value;
+        }
+      });
+      const time = timeDisplay.join('');
+      
+      setDisplayTime(time);
+      
+      const correctSequence = newCrystals.every((crystal, index) => {
+        const expectedPositions = { green: 0, blue: 1, red: 3, yellow: 4 };
+        return crystal.position === expectedPositions[crystal.id];
+      });
+      
+      if (correctSequence) setSolved(true);
+      
+      return newCrystals;
+    });
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  return (
+    <div className="p-8 max-w-2xl mx-auto bg-gray-900 rounded-lg">
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold text-white mb-4">Timekeepers</h2>
+        <p className="text-gray-300 mb-4">Position the crystals to restore the timeline</p>
+        <div className="text-sm text-gray-400 space-y-2">
+          <p>"Quando la natura si risveglia, il verde apre il cerchio"</p>
+          <p>"Due lune si riflettono nell'oceano blu"</p>
+          <p>"Le tre fiamme rosse danzano al tramonto"</p>
+          <p>"Il sole giallo traccia quattro ombre sulla meridiana"</p>
+        </div>
+      </div>
+
+      <div className="bg-black p-6 rounded-lg mb-8 text-center">
+        <span className="font-mono text-6xl tracking-widest text-green-500">
+          {displayTime}
+        </span>
+      </div>
+
+      <div className="flex justify-center gap-4 mb-8">
+        {[0, 1, 3, 4].map((position) => (
+          <div
+            key={position}
+            className="w-16 h-16 border-2 border-gray-600 rounded-lg"
+            onDrop={(e) => handleDrop(e, position)}
+            onDragOver={handleDragOver}
+          >
+            {crystals.find(c => c.position === position) && (
+              <div
+                className={`w-full h-full rounded-lg ${
+                  crystalColors[crystals.find(c => c.position === position).id]
+                } cursor-grab`}
+                draggable
+                onDragStart={(e) => 
+                  handleDragStart(e, crystals.find(c => c.position === position))
+                }
+              />
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="flex justify-center gap-4">
+        {crystals.filter(c => c.position === null).map((crystal) => (
+          <div
+            key={crystal.id}
+            className={`w-16 h-16 ${crystalColors[crystal.id]} rounded-lg cursor-grab`}
+            draggable
+            onDragStart={(e) => handleDragStart(e, crystal)}
+          />
+        ))}
+      </div>
+
+      {solved && (
+        <div className="mt-8 text-center text-green-500 font-bold text-xl">
+          Ottimo lavoro, avete ristrutturato la linea del tempo!
+        </div>
+      )}
+    </div>
+  );
+};
+
+ReactDOM.render(<TimeCrystalPuzzle />, document.getElementById('root'));
